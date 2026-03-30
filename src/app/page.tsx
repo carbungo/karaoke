@@ -1,23 +1,84 @@
 import { Suspense } from "react";
-import { Inter, Noto_Color_Emoji, Playfair_Display, Fira_Code, Cormorant_Garamond } from "next/font/google";
+import {
+  Inter, Playfair_Display, Fira_Code, Cormorant_Garamond, Noto_Color_Emoji,
+  Abril_Fatface, Bebas_Neue, Cinzel, Dancing_Script, EB_Garamond,
+  Josefin_Sans, Lora, Merriweather, Montserrat, Oswald,
+  Pacifico, Permanent_Marker, Raleway, Rubik, Space_Grotesk,
+  Space_Mono, Unbounded, Archivo_Black, Bitter, Caveat,
+  DM_Serif_Display, Instrument_Serif, Outfit, Syne,
+} from "next/font/google";
 
 export const dynamic = "force-dynamic";
 
+// ── All the fonts ──
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 const notoEmoji = Noto_Color_Emoji({ subsets: ["emoji"], weight: "400", display: "swap" });
 const playfair = Playfair_Display({ subsets: ["latin"], display: "swap" });
 const fira = Fira_Code({ subsets: ["latin"], display: "swap" });
 const cormorant = Cormorant_Garamond({ subsets: ["latin"], weight: ["300", "400", "600", "700"], display: "swap" });
+const abril = Abril_Fatface({ subsets: ["latin"], weight: "400", display: "swap" });
+const bebas = Bebas_Neue({ subsets: ["latin"], weight: "400", display: "swap" });
+const cinzel = Cinzel({ subsets: ["latin"], display: "swap" });
+const dancing = Dancing_Script({ subsets: ["latin"], display: "swap" });
+const ebGaramond = EB_Garamond({ subsets: ["latin"], display: "swap" });
+const josefin = Josefin_Sans({ subsets: ["latin"], display: "swap" });
+const lora = Lora({ subsets: ["latin"], display: "swap" });
+const merriweather = Merriweather({ subsets: ["latin"], weight: ["300", "400", "700", "900"], display: "swap" });
+const montserrat = Montserrat({ subsets: ["latin"], display: "swap" });
+const oswald = Oswald({ subsets: ["latin"], display: "swap" });
+const pacifico = Pacifico({ subsets: ["latin"], weight: "400", display: "swap" });
+const permanentMarker = Permanent_Marker({ subsets: ["latin"], weight: "400", display: "swap" });
+const raleway = Raleway({ subsets: ["latin"], display: "swap" });
+const rubik = Rubik({ subsets: ["latin"], display: "swap" });
+const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], display: "swap" });
+const spaceMono = Space_Mono({ subsets: ["latin"], weight: ["400", "700"], display: "swap" });
+const unbounded = Unbounded({ subsets: ["latin"], display: "swap" });
+const archivoBlack = Archivo_Black({ subsets: ["latin"], weight: "400", display: "swap" });
+const bitter = Bitter({ subsets: ["latin"], display: "swap" });
+const caveat = Caveat({ subsets: ["latin"], display: "swap" });
+const dmSerif = DM_Serif_Display({ subsets: ["latin"], weight: "400", display: "swap" });
+const instrumentSerif = Instrument_Serif({ subsets: ["latin"], weight: "400", display: "swap" });
+const outfit = Outfit({ subsets: ["latin"], display: "swap" });
+const syne = Syne({ subsets: ["latin"], display: "swap" });
 
-const fontMap = {
-  verse: inter.className,
-  chorus: playfair.className,
-  crab: fira.className,
-  bridge: cormorant.className,
-  outro: playfair.className,
-  title: playfair.className,
-  subtitle: fira.className,
-} as const;
+// ── Font pools by section ──
+const verseFonts = [
+  inter, lora, merriweather, raleway, rubik, josefin, ebGaramond,
+  montserrat, bitter, outfit, spaceGrotesk, cormorant, syne,
+].map(f => f.className);
+
+const chorusFonts = [
+  playfair, abril, bebas, cinzel, permanentMarker, oswald,
+  unbounded, archivoBlack, dmSerif, instrumentSerif, syne,
+].map(f => f.className);
+
+const bridgeFonts = [
+  cormorant, dancing, caveat, pacifico, lora, instrumentSerif,
+  ebGaramond, merriweather,
+].map(f => f.className);
+
+const outroFonts = [
+  playfair, abril, cinzel, dmSerif, instrumentSerif, unbounded,
+].map(f => f.className);
+
+const crabFonts = [
+  fira, spaceMono, spaceGrotesk, outfit, rubik,
+].map(f => f.className);
+
+const titleFonts = [playfair, cinzel, abril, unbounded, bebas].map(f => f.className);
+const subtitleFonts = [fira, spaceMono, spaceGrotesk].map(f => f.className);
+
+function pickFont(id: number, kind: string): string {
+  switch (kind) {
+    case "chorus": return chorusFonts[id % chorusFonts.length];
+    case "bridge": return bridgeFonts[id % bridgeFonts.length];
+    case "outro":  return outroFonts[id % outroFonts.length];
+    case "crab":   return crabFonts[id % crabFonts.length];
+    case "title":  return titleFonts[id % titleFonts.length];
+    case "subtitle": return subtitleFonts[id % subtitleFonts.length];
+    default:       return verseFonts[id % verseFonts.length];
+  }
+}
 
 // ─── Color Palettes ───
 const versePalette = [
@@ -238,7 +299,7 @@ async function Lyric({
     }
   `;
 
-  const fontClass = fontMap[kind || "verse"];
+  const fontClass = pickFont(id, kind || "verse");
 
   return (
     <div>
