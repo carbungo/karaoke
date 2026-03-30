@@ -64,7 +64,8 @@ async function Lyric({
   const h3 = (h + 60) % 360;
 
   // Animation variety
-  const entrances = [
+  // Base entrances (mobile-safe, no blur)
+  const entrancesBase = [
     `from { opacity: 0; transform: translateY(18px) scale(0.97); }
      to { opacity: 1; transform: translateY(0) scale(1); }`,
     `from { opacity: 0; transform: translateX(-20px); }
@@ -74,7 +75,19 @@ async function Lyric({
     `from { opacity: 0; transform: scale(0.94); }
      to { opacity: 1; transform: scale(1); }`,
   ];
-  const entrance = entrances[id % entrances.length];
+  // Desktop entrances (with blur)
+  const entrancesDesktop = [
+    `from { opacity: 0; transform: translateY(20px) scale(0.96); filter: blur(8px); }
+     to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }`,
+    `from { opacity: 0; transform: translateX(-30px) scale(0.98); filter: blur(6px); }
+     to { opacity: 1; transform: translateX(0) scale(1); filter: blur(0); }`,
+    `from { opacity: 0; transform: translateY(15px) rotateX(10deg); filter: blur(4px); }
+     to { opacity: 1; transform: translateY(0) rotateX(0); filter: blur(0); }`,
+    `from { opacity: 0; transform: scale(0.9); filter: blur(10px); }
+     to { opacity: 1; transform: scale(1); filter: blur(0); }`,
+  ];
+  const entranceBase = entrancesBase[id % entrancesBase.length];
+  const entranceDesktop = entrancesDesktop[id % entrancesDesktop.length];
   const duration = 0.6 + (id % 3) * 0.15;
   const easings = [
     "cubic-bezier(0.16, 1, 0.3, 1)",
@@ -110,6 +123,7 @@ async function Lyric({
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      filter: drop-shadow(0 0 ${glowSize}px hsla(${h}, ${s}%, ${l}%, 0.25));
       animation:
         fadeIn-${id} ${duration}s ${easing} forwards,
         shimmer-${id} ${shimmerSpeed}s linear infinite;
@@ -150,7 +164,10 @@ async function Lyric({
   }
 
   const css = `
-    @keyframes fadeIn-${id} { ${entrance} }
+    @keyframes fadeIn-${id} { ${entranceBase} }
+    @media (hover: hover) and (min-width: 768px) {
+      @keyframes fadeIn-${id} { ${entranceDesktop} }
+    }
     ${extraKeyframes}
     .lyric-${id} {
       opacity: 0;
