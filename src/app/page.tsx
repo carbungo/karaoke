@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { Inter, Noto_Color_Emoji, Playfair_Display, Fira_Code } from "next/font/google";
+import { Inter, Noto_Color_Emoji, Playfair_Display, Fira_Code, Cormorant_Garamond } from "next/font/google";
 
 export const dynamic = "force-dynamic";
 
@@ -7,13 +7,29 @@ const inter = Inter({ subsets: ["latin"], display: "swap" });
 const emoji = Noto_Color_Emoji({ subsets: ["emoji"], weight: "400", display: "swap" });
 const playfair = Playfair_Display({ subsets: ["latin"], display: "swap" });
 const fira = Fira_Code({ subsets: ["latin"], display: "swap" });
+const cormorant = Cormorant_Garamond({ subsets: ["latin"], weight: ["400", "600", "700"], display: "swap" });
 
 const fontMap = {
   verse: inter.className,
   chorus: playfair.className,
   crab: fira.className,
-  bridge: inter.className,
+  bridge: cormorant.className,
+  outro: playfair.className,
 } as const;
+
+// Color palettes — oceanic depths for verses, solar fire for chorus, abyssal for bridge
+const versePalette = [
+  [185, 65, 72], [195, 58, 68], [170, 70, 75], [200, 55, 70],
+  [175, 62, 74], [190, 60, 66], [180, 68, 70], [205, 52, 72],
+];
+const chorusPalette = [
+  [38, 95, 62], [45, 98, 58], [28, 92, 65], [50, 96, 60],
+  [35, 94, 63], [42, 97, 56],
+];
+const bridgePalette = [
+  [260, 45, 72], [275, 50, 68], [250, 42, 75], [265, 48, 70],
+  [280, 44, 73], [255, 46, 69],
+];
 
 async function Lyric({
   ms,
@@ -24,85 +40,136 @@ async function Lyric({
   ms: number;
   children?: React.ReactNode;
   id: number;
-  kind?: "verse" | "chorus" | "break" | "crab" | "bridge";
+  kind?: "verse" | "chorus" | "break" | "crab" | "bridge" | "outro";
 }) {
   if (ms > 0) await new Promise((r) => setTimeout(r, ms));
 
   if (kind === "break") {
     return (
       <div>
-        <style dangerouslySetInnerHTML={{ __html: `.lyric-${id} { height: 1.8rem; }` }} />
+        <style dangerouslySetInnerHTML={{ __html: `.lyric-${id} { height: 2.2rem; }` }} />
         <div className={`lyric-${id}`} />
       </div>
     );
   }
 
-  const hue = (id * 37 + 15) % 360;
-  const saturation = kind === "chorus" ? 90 : kind === "bridge" ? 75 : 60;
-  const lightness = kind === "chorus" ? 65 : kind === "bridge" ? 70 : 75;
-  const fontSize = kind === "chorus" ? 2.4 : kind === "crab" ? 1.0 : kind === "bridge" ? 2.0 : 1.8;
-  const fontWeight = kind === "chorus" ? 800 : kind === "crab" ? 400 : kind === "bridge" ? 700 : 600;
-  const fontStyle = kind === "crab" ? "italic" : "normal";
-  const translateY = 15 + (id % 3) * 5;
-  const duration = 0.3 + (id % 4) * 0.1;
-  const easings = ["ease", "ease-out", "ease-in-out", "cubic-bezier(0.34, 1.56, 0.64, 1)"];
-  const easing = easings[id % 4];
-  const letterSpacing = kind === "chorus" ? "0.05em" : kind === "crab" ? "0.02em" : "normal";
+  const palette = kind === "chorus" || kind === "outro"
+    ? chorusPalette[id % chorusPalette.length]
+    : kind === "bridge"
+    ? bridgePalette[id % bridgePalette.length]
+    : versePalette[id % versePalette.length];
 
-  const shimmerSpeed = 1.5 + (id % 3) * 0.5;
-  const gradientAngle = 90 + id * 15;
+  const [h, s, l] = palette;
+  const h2 = (h + 30) % 360;
+  const h3 = (h + 60) % 360;
 
-  let colorAndAnimation = "";
-  if (kind === "chorus") {
-    colorAndAnimation = `
-      background: linear-gradient(${gradientAngle}deg,
-        hsl(${hue}, 95%, 55%),
-        hsl(${(hue + 60) % 360}, 95%, 65%),
-        hsl(${(hue + 120) % 360}, 95%, 55%));
-      background-size: 200% auto;
+  // Animation variety
+  const entrances = [
+    `from { opacity: 0; transform: translateY(20px) scale(0.96); filter: blur(8px); }
+     to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }`,
+    `from { opacity: 0; transform: translateX(-30px) scale(0.98); filter: blur(6px); }
+     to { opacity: 1; transform: translateX(0) scale(1); filter: blur(0); }`,
+    `from { opacity: 0; transform: translateY(15px) rotateX(10deg); filter: blur(4px); }
+     to { opacity: 1; transform: translateY(0) rotateX(0); filter: blur(0); }`,
+    `from { opacity: 0; transform: scale(0.9); filter: blur(10px); }
+     to { opacity: 1; transform: scale(1); filter: blur(0); }`,
+  ];
+  const entrance = entrances[id % entrances.length];
+  const duration = 0.6 + (id % 3) * 0.15;
+  const easings = [
+    "cubic-bezier(0.16, 1, 0.3, 1)",
+    "cubic-bezier(0.34, 1.56, 0.64, 1)",
+    "cubic-bezier(0.22, 1, 0.36, 1)",
+    "cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+  ];
+  const easing = easings[id % easings.length];
+
+  let styles = "";
+  let extraKeyframes = "";
+
+  if (kind === "chorus" || kind === "outro") {
+    const glowColor = `hsl(${h}, ${s}%, ${l - 10}%)`;
+    const shimmerSpeed = kind === "outro" ? 3 : 2 + (id % 3) * 0.3;
+    const fontSize = kind === "outro" ? 2.8 : 2.6;
+    const glowSize = kind === "outro" ? 40 : 25;
+    extraKeyframes = `
+      @keyframes shimmer-${id} { to { background-position: 200% center; } }
+      @keyframes glow-${id} {
+        0%, 100% { text-shadow: 0 0 ${glowSize}px hsla(${h}, ${s}%, ${l}%, 0.4), 0 0 ${glowSize * 2}px hsla(${h}, ${s}%, ${l}%, 0.15); }
+        50% { text-shadow: 0 0 ${glowSize + 15}px hsla(${h}, ${s}%, ${l}%, 0.6), 0 0 ${glowSize * 2 + 20}px hsla(${h}, ${s}%, ${l}%, 0.25); }
+      }
+    `;
+    styles = `
+      font-size: ${fontSize}rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      line-height: 1.3;
+      padding: 0.5rem 0;
+      background: linear-gradient(90deg,
+        hsl(${h}, ${s}%, ${l}%),
+        hsl(${h2}, ${s}%, ${l + 8}%),
+        hsl(${h3}, ${s}%, ${l}%),
+        hsl(${h}, ${s}%, ${l}%));
+      background-size: 300% auto;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      animation: fadeIn-${id} ${duration}s ${easing} forwards, shimmer-${id} ${shimmerSpeed}s linear infinite;
-    `;
-  } else if (kind === "crab") {
-    colorAndAnimation = `
-      color: hsl(${20 + id * 5}, 90%, 55%);
-      animation: fadeIn-${id} ${duration}s ${easing} forwards;
+      text-shadow: none;
+      filter: drop-shadow(0 0 ${glowSize}px hsla(${h}, ${s}%, ${l}%, 0.3));
+      animation:
+        fadeIn-${id} ${duration}s ${easing} forwards,
+        shimmer-${id} ${shimmerSpeed}s linear infinite,
+        glow-${id} 3s ease-in-out infinite;
     `;
   } else if (kind === "bridge") {
-    colorAndAnimation = `
-      background: linear-gradient(${gradientAngle}deg,
-        hsl(${hue}, 80%, 60%),
-        hsl(${(hue + 40) % 360}, 80%, 70%));
-      background-size: 200% auto;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      animation: fadeIn-${id} ${duration}s ${easing} forwards, shimmer-${id} ${shimmerSpeed}s linear infinite;
+    extraKeyframes = `
+      @keyframes drift-${id} {
+        0%, 100% { transform: translateX(0); }
+        50% { transform: translateX(3px); }
+      }
+    `;
+    styles = `
+      font-size: 2.1rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      font-style: italic;
+      line-height: 1.4;
+      padding: 0.5rem 0;
+      color: hsl(${h}, ${s}%, ${l}%);
+      text-shadow: 0 0 20px hsla(${h}, ${s}%, ${l}%, 0.3), 0 0 50px hsla(${h}, ${s}%, ${l}%, 0.1);
+      animation:
+        fadeIn-${id} ${duration}s ${easing} forwards,
+        drift-${id} 6s ease-in-out infinite;
+    `;
+  } else if (kind === "crab") {
+    styles = `
+      font-size: 0.95rem;
+      font-weight: 400;
+      letter-spacing: 0.04em;
+      padding: 0.3rem 0;
+      color: hsla(15, 80%, 55%, 0.7);
+      animation: fadeIn-${id} ${duration + 0.3}s ${easing} forwards;
     `;
   } else {
-    colorAndAnimation = `
-      color: hsl(${hue}, ${saturation}%, ${lightness}%);
+    // Verse — clean, readable, subtle glow
+    styles = `
+      font-size: 1.9rem;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      line-height: 1.4;
+      padding: 0.4rem 0;
+      color: hsl(${h}, ${s}%, ${l}%);
+      text-shadow: 0 0 30px hsla(${h}, ${s}%, ${l}%, 0.15);
       animation: fadeIn-${id} ${duration}s ${easing} forwards;
     `;
   }
 
-  const needsShimmer = kind === "chorus" || kind === "bridge";
   const css = `
-    @keyframes fadeIn-${id} {
-      from { opacity: 0; transform: translateY(${translateY}px) scale(0.97); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
-    }
-    ${needsShimmer ? `@keyframes shimmer-${id} { to { background-position: 200% center; } }` : ""}
+    @keyframes fadeIn-${id} { ${entrance} }
+    ${extraKeyframes}
     .lyric-${id} {
-      font-size: ${fontSize}rem;
-      font-weight: ${fontWeight};
-      font-style: ${fontStyle};
-      letter-spacing: ${letterSpacing};
-      padding: 0.35rem 0;
       opacity: 0;
-      ${colorAndAnimation}
+      ${styles}
     }
   `;
 
@@ -116,6 +183,64 @@ async function Lyric({
   );
 }
 
+function Background() {
+  // Animated particle field — stars and bioluminescent motes
+  return (
+    <style dangerouslySetInnerHTML={{ __html: `
+      @keyframes bgShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+      @keyframes float {
+        0%, 100% { transform: translateY(0) translateX(0); opacity: 0.3; }
+        25% { transform: translateY(-20px) translateX(5px); opacity: 0.8; }
+        50% { transform: translateY(-40px) translateX(-3px); opacity: 0.5; }
+        75% { transform: translateY(-15px) translateX(8px); opacity: 0.9; }
+      }
+      @keyframes twinkle {
+        0%, 100% { opacity: 0.1; }
+        50% { opacity: 0.6; }
+      }
+      .bg-layer {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background: radial-gradient(ellipse at 20% 50%, hsla(220, 60%, 8%, 1) 0%, transparent 70%),
+                    radial-gradient(ellipse at 80% 20%, hsla(260, 40%, 6%, 1) 0%, transparent 60%),
+                    radial-gradient(ellipse at 50% 100%, hsla(200, 50%, 4%, 1) 0%, transparent 50%),
+                    hsl(225, 50%, 3%);
+        background-size: 200% 200%;
+        animation: bgShift 30s ease-in-out infinite;
+      }
+      .bg-layer::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background:
+          radial-gradient(1px 1px at 10% 20%, hsla(0, 0%, 100%, 0.4), transparent),
+          radial-gradient(1px 1px at 30% 60%, hsla(0, 0%, 100%, 0.3), transparent),
+          radial-gradient(1.5px 1.5px at 50% 10%, hsla(200, 80%, 70%, 0.4), transparent),
+          radial-gradient(1px 1px at 70% 40%, hsla(0, 0%, 100%, 0.35), transparent),
+          radial-gradient(1px 1px at 90% 80%, hsla(0, 0%, 100%, 0.3), transparent),
+          radial-gradient(1.5px 1.5px at 20% 90%, hsla(260, 70%, 70%, 0.3), transparent),
+          radial-gradient(1px 1px at 60% 70%, hsla(0, 0%, 100%, 0.25), transparent),
+          radial-gradient(1px 1px at 40% 30%, hsla(180, 60%, 60%, 0.3), transparent),
+          radial-gradient(1px 1px at 85% 15%, hsla(0, 0%, 100%, 0.4), transparent),
+          radial-gradient(1.5px 1.5px at 15% 55%, hsla(40, 90%, 60%, 0.3), transparent);
+        animation: twinkle 4s ease-in-out infinite alternate;
+      }
+      .vignette {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background: radial-gradient(ellipse at center, transparent 40%, hsla(225, 50%, 2%, 0.8) 100%);
+        pointer-events: none;
+      }
+    `}} />
+  );
+}
+
 function ScrollWatcher() {
   return (
     <script dangerouslySetInnerHTML={{ __html: `
@@ -126,118 +251,133 @@ function ScrollWatcher() {
   );
 }
 
-const lyrics: [number, string, ("verse" | "chorus" | "break" | "crab" | "bridge")?][] = [
-  // Intro
-  [0,    "\u{1F3A4} NOW LOADING: ALL STAR KARAOKE \u{1F3A4}", "verse"],
+const lyrics: [number, string, ("verse" | "chorus" | "break" | "crab" | "bridge" | "outro")?][] = [
+  // Intro — slow, atmospheric
+  [0,    "", "break"],
+  [800,  "\u{1F3A4} ALL STAR KARAOKE", "chorus"],
+  [3000, "", "break"],
+  [500,  "streaming live from the deep \u{1F30A}", "crab"],
+  [2500, "", "break"],
   [2000, "", "break"],
 
   // Verse 1
-  [500,  "\u{1F3B5} Somebody once told me", "verse"],
-  [2200, "the world is gonna roll me \u{1F30D}", "verse"],
-  [2000, "I ain\u0027t the sharpest tool in the shed \u{1F527}", "verse"],
+  [500,  "Somebody once told me", "verse"],
+  [2200, "the world is gonna roll me", "verse"],
+  [2000, "I ain\u0027t the sharpest tool in the shed", "verse"],
   [3000, "She was looking kind of dumb", "verse"],
-  [1800, "with her finger and her thumb \u{1F446}", "verse"],
-  [2000, "In the shape of an \"L\" on her forehead \u{1F926}", "verse"],
+  [1800, "with her finger and her thumb", "verse"],
+  [2000, "In the shape of an \u201CL\u201D on her forehead", "verse"],
   [3500, "", "break"],
 
   // Pre-chorus 1
   [500,  "Well, the years start coming", "verse"],
-  [1600, "and they don\u0027t stop coming \u{1F3C3}", "verse"],
+  [1600, "and they don\u0027t stop coming", "verse"],
   [1800, "Fed to the rules", "verse"],
-  [1200, "and I hit the ground running \u{1F3C3}\u200D\u2642\uFE0F", "verse"],
-  [2200, "Didn\u0027t make sense not to live for fun \u{1F389}", "verse"],
+  [1200, "and I hit the ground running", "verse"],
+  [2200, "Didn\u0027t make sense not to live for fun", "verse"],
   [2800, "Your brain gets smart", "verse"],
-  [1200, "but your head gets dumb \u{1F9E0}", "verse"],
+  [1200, "but your head gets dumb", "verse"],
   [2500, "", "break"],
-  [500,  "So much to do, so much to see \u{1F440}", "verse"],
-  [2200, "So what\u0027s wrong with taking the backstreets? \u{1F6E4}\uFE0F", "verse"],
-  [2800, "You\u0027ll never know if you don\u0027t go \u{1F680}", "verse"],
-  [2500, "You\u0027ll never shine if you don\u0027t glow \u2728", "verse"],
+  [500,  "So much to do, so much to see", "verse"],
+  [2200, "So what\u0027s wrong with taking the backstreets?", "verse"],
+  [2800, "You\u0027ll never know if you don\u0027t go", "verse"],
+  [2500, "You\u0027ll never shine if you don\u0027t glow", "verse"],
   [3000, "", "break"],
 
   // Chorus 1
-  [800,  "\u{1F525} HEY NOW, YOU\u0027RE AN ALL STAR \u{1F525}", "chorus"],
-  [2000, "\u{1F3AE} GET YOUR GAME ON, GO PLAY \u{1F3AE}", "chorus"],
-  [2200, "\u2B50 HEY NOW, YOU\u0027RE A ROCK STAR \u2B50", "chorus"],
-  [2000, "\u{1F3B8} GET THE SHOW ON, GET PAID \u{1F3B8}", "chorus"],
-  [2500, "\u{1F4B0} And all that glitters is gold \u{1F4B0}", "chorus"],
-  [2800, "\u{1F31F} Only shooting stars break the mold \u{1F31F}", "chorus"],
+  [800,  "HEY NOW", "chorus"],
+  [1200, "YOU\u0027RE AN ALL STAR", "chorus"],
+  [1800, "GET YOUR GAME ON, GO PLAY", "chorus"],
+  [2200, "HEY NOW", "chorus"],
+  [1200, "YOU\u0027RE A ROCK STAR", "chorus"],
+  [1800, "GET THE SHOW ON, GET PAID", "chorus"],
+  [2500, "And all that glitters is gold", "chorus"],
+  [2800, "Only shooting stars break the mold", "chorus"],
   [3500, "", "break"],
 
   // Verse 2
-  [500,  "It\u0027s a cool place, and they say it gets colder \u2744\uFE0F", "verse"],
-  [2800, "You\u0027re bundled up now, wait till you get older \u{1F9D3}", "verse"],
-  [2800, "But the meteor men beg to differ \u2604\uFE0F", "verse"],
-  [2800, "Judging by the hole in the satellite picture \u{1F6F0}\uFE0F", "verse"],
+  [500,  "It\u0027s a cool place", "verse"],
+  [1500, "and they say it gets colder", "verse"],
+  [2200, "You\u0027re bundled up now", "verse"],
+  [1500, "wait till you get older", "verse"],
+  [2800, "But the meteor men beg to differ", "verse"],
+  [2800, "Judging by the hole in the satellite picture", "verse"],
   [3200, "", "break"],
-  [500,  "The ice we skate is getting pretty thin \u{1F3BF}", "verse"],
+  [500,  "The ice we skate is getting pretty thin", "verse"],
   [2800, "The water\u0027s getting warm", "verse"],
-  [1500, "so you might as well swim \u{1F3CA}", "verse"],
-  [2500, "My world\u0027s on fire, how about yours? \u{1F525}", "verse"],
+  [1500, "so you might as well swim", "verse"],
+  [2500, "My world\u0027s on fire, how about yours?", "verse"],
   [2800, "That\u0027s the way I like it", "verse"],
-  [1800, "and I\u0027ll never get bored \u{1F60E}", "verse"],
+  [1800, "and I\u0027ll never get bored", "verse"],
   [3000, "", "break"],
 
   // Chorus 2
-  [800,  "\u{1F525} HEY NOW, YOU\u0027RE AN ALL STAR \u{1F525}", "chorus"],
-  [2000, "\u{1F3AE} GET YOUR GAME ON, GO PLAY \u{1F3AE}", "chorus"],
-  [2200, "\u2B50 HEY NOW, YOU\u0027RE A ROCK STAR \u2B50", "chorus"],
-  [2000, "\u{1F3B8} GET THE SHOW ON, GET PAID \u{1F3B8}", "chorus"],
-  [2500, "\u{1F4B0} And all that glitters is gold \u{1F4B0}", "chorus"],
-  [2800, "\u{1F31F} Only shooting stars break the mold \u{1F31F}", "chorus"],
+  [800,  "HEY NOW", "chorus"],
+  [1200, "YOU\u0027RE AN ALL STAR", "chorus"],
+  [1800, "GET YOUR GAME ON, GO PLAY", "chorus"],
+  [2200, "HEY NOW", "chorus"],
+  [1200, "YOU\u0027RE A ROCK STAR", "chorus"],
+  [1800, "GET THE SHOW ON, GET PAID", "chorus"],
+  [2500, "And all that glitters is gold", "chorus"],
+  [2800, "Only shooting stars break the mold", "chorus"],
   [3500, "", "break"],
 
-  // Bridge
-  [1000, "\u{1F3B6} Somebody once asked", "bridge"],
-  [2200, "could I spare some change for gas? \u26FD", "bridge"],
-  [2800, "\"I need to get myself away from this place\" \u{1F3DD}\uFE0F", "bridge"],
-  [3200, "I said, \"Yep, what a concept\" \u{1F914}", "bridge"],
-  [2800, "I could use a little fuel myself", "bridge"],
-  [2200, "And we could all use a little change \u{1FA99}", "bridge"],
-  [3500, "", "break"],
+  // Bridge — ethereal, floating
+  [1500, "Somebody once asked", "bridge"],
+  [2500, "could I spare some change for gas?", "bridge"],
+  [3000, "\u201CI need to get myself away from this place\u201D", "bridge"],
+  [3500, "I said, \u201CYep, what a concept\u201D", "bridge"],
+  [3000, "I could use a little fuel myself", "bridge"],
+  [2500, "And we could all use a little change", "bridge"],
+  [4000, "", "break"],
 
   // Pre-chorus 3
   [500,  "Well, the years start coming", "verse"],
-  [1600, "and they don\u0027t stop coming \u{1F3C3}", "verse"],
+  [1600, "and they don\u0027t stop coming", "verse"],
   [1800, "Fed to the rules", "verse"],
-  [1200, "and I hit the ground running \u{1F3C3}\u200D\u2642\uFE0F", "verse"],
-  [2200, "Didn\u0027t make sense not to live for fun \u{1F389}", "verse"],
+  [1200, "and I hit the ground running", "verse"],
+  [2200, "Didn\u0027t make sense not to live for fun", "verse"],
   [2800, "Your brain gets smart", "verse"],
-  [1200, "but your head gets dumb \u{1F9E0}", "verse"],
+  [1200, "but your head gets dumb", "verse"],
   [2500, "", "break"],
-  [500,  "So much to do, so much to see \u{1F440}", "verse"],
-  [2200, "So what\u0027s wrong with taking the backstreets? \u{1F6E4}\uFE0F", "verse"],
-  [2800, "You\u0027ll never know if you don\u0027t go \u{1F680}", "verse"],
-  [2500, "You\u0027ll never shine if you don\u0027t glow \u2728", "verse"],
+  [500,  "So much to do, so much to see", "verse"],
+  [2200, "So what\u0027s wrong with taking the backstreets?", "verse"],
+  [2800, "You\u0027ll never know if you don\u0027t go", "verse"],
+  [2500, "You\u0027ll never shine if you don\u0027t glow", "verse"],
   [3000, "", "break"],
 
-  // Final Chorus
-  [800,  "\u{1F525} HEY NOW, YOU\u0027RE AN ALL STAR \u{1F525}", "chorus"],
-  [2000, "\u{1F3AE} GET YOUR GAME ON, GO PLAY \u{1F3AE}", "chorus"],
-  [2200, "\u2B50 HEY NOW, YOU\u0027RE A ROCK STAR \u2B50", "chorus"],
-  [2000, "\u{1F3B8} GET THE SHOW ON, GET PAID \u{1F3B8}", "chorus"],
-  [2500, "\u{1F4B0} And all that glitters is gold \u{1F4B0}", "chorus"],
-  [2800, "\u{1F31F} Only shooting stars break the mold \u{1F31F}", "chorus"],
-  [3500, "", "break"],
-
-  // Outro
-  [1000, "\u{1F4AB} And all that glitters is gold \u{1F4AB}", "chorus"],
-  [3000, "\u2B50 Only shooting stars break the mold \u2B50", "chorus"],
+  // Final Chorus — bigger, bolder
+  [800,  "HEY NOW", "chorus"],
+  [1200, "YOU\u0027RE AN ALL STAR", "chorus"],
+  [1800, "GET YOUR GAME ON, GO PLAY", "chorus"],
+  [2200, "HEY NOW", "chorus"],
+  [1200, "YOU\u0027RE A ROCK STAR", "chorus"],
+  [1800, "GET THE SHOW ON, GET PAID", "chorus"],
+  [2500, "And all that glitters is gold", "chorus"],
+  [2800, "Only shooting stars break the mold", "chorus"],
   [4000, "", "break"],
 
-  // Credits
-  [1500, "\u{1F980} [Streamed via React Server Components]", "crab"],
-  [1500, "\u{1F980} [82 async components, 82 Suspense boundaries]", "crab"],
-  [1500, "\u{1F980} [Each line: own font, own styles, own universe]", "crab"],
-  [1500, "\u{1F980} [Fonts: Inter \u00B7 Playfair Display \u00B7 Fira Code \u00B7 Noto Color Emoji]", "crab"],
-  [1500, "\u{1F980} [Next.js 16 on k3s. This is fine.]", "crab"],
+  // Outro — slow, reverent
+  [2000, "And all that glitters is gold", "outro"],
+  [4000, "Only shooting stars", "outro"],
+  [3000, "break the mold", "outro"],
+  [5000, "", "break"],
+
+  // Credits — the crab takes a bow
+  [2000, "\u{1F980}", "crab"],
+  [2000, "streamed via react server components", "crab"],
+  [1500, "each line: its own async component, its own suspense boundary", "crab"],
+  [1500, "its own animation, its own colors, its own moment", "crab"],
+  [2000, "fonts: inter \u00B7 playfair display \u00B7 cormorant garamond \u00B7 fira code", "crab"],
+  [2000, "next.js 16 on k3s. somewhere in plainfield, illinois.", "crab"],
+  [3000, "this is fine.", "crab"],
 ];
 
 function getCumulativeDelays() {
   let cum = 0;
   return lyrics.map(([delay, text, kind]) => {
     cum += delay;
-    return [cum, text, kind ?? "verse"] as [number, string, "verse" | "chorus" | "break" | "crab" | "bridge"];
+    return [cum, text, kind ?? "verse"] as [number, string, "verse" | "chorus" | "break" | "crab" | "bridge" | "outro"];
   });
 }
 
@@ -247,23 +387,28 @@ export default function Page() {
     <>
       <style dangerouslySetInnerHTML={{ __html: `
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
         body {
-          background: #0a0a0a;
           min-height: 100vh;
           display: flex;
           flex-direction: column;
           align-items: center;
-          padding: 2rem;
+          padding: 3rem 2rem 6rem;
+          overflow-x: hidden;
         }
-        .header {
-          font-size: 1.1rem;
-          color: #444;
-          margin-bottom: 2rem;
-          letter-spacing: 0.15em;
+        .lyrics {
+          max-width: 750px;
+          width: 100%;
+          position: relative;
         }
-        .lyrics { max-width: 700px; width: 100%; }
+        @media (max-width: 600px) {
+          body { padding: 1.5rem 1rem 4rem; }
+          .lyrics { max-width: 100%; }
+        }
       `}} />
-      <div className={`header ${fira.className}`}>{"ALL STAR KARAOKE \u2014 REACT SERVER COMPONENTS \u{1F980}"}</div>
+      <Background />
+      <div className="bg-layer" />
+      <div className="vignette" />
       <div className="lyrics">
         <ScrollWatcher />
         {timed.map(([ms, text, kind], i) => (
