@@ -1,6 +1,21 @@
 import { Suspense } from "react";
+import { Inter, Noto_Color_Emoji, Playfair_Display, Fira_Code } from "next/font/google";
 
 export const dynamic = "force-dynamic";
+
+// Fonts declared at module scope (next/font requirement) but only
+// referenced by the components that need them. Each Lyric applies
+// font className directly — the font CSS ships with the component.
+const inter = Inter({ subsets: ["latin"], display: "swap" });
+const emoji = Noto_Color_Emoji({ subsets: ["emoji"], weight: "400", display: "swap" });
+const playfair = Playfair_Display({ subsets: ["latin"], display: "swap" });
+const fira = Fira_Code({ subsets: ["latin"], display: "swap" });
+
+const fontMap = {
+  verse: inter.className,
+  chorus: playfair.className,
+  crab: fira.className,
+} as const;
 
 async function Lyric({
   ms,
@@ -35,13 +50,6 @@ async function Lyric({
   const easings = ["ease", "ease-out", "ease-in-out", "cubic-bezier(0.34, 1.56, 0.64, 1)"];
   const easing = easings[id % 4];
   const letterSpacing = kind === "chorus" ? "0.05em" : kind === "crab" ? "0.02em" : "normal";
-
-  // Each kind uses its own next/font CSS variable
-  const fontFamily = kind === "chorus"
-    ? "var(--font-chorus), Georgia, serif"
-    : kind === "crab"
-    ? "var(--font-crab), monospace"
-    : "var(--font-body), system-ui, sans-serif";
 
   const shimmerSpeed = 1.5 + (id % 3) * 0.5;
   const gradientAngle = 90 + id * 15;
@@ -81,7 +89,6 @@ async function Lyric({
       font-size: ${fontSize}rem;
       font-weight: ${fontWeight};
       font-style: ${fontStyle};
-      font-family: ${fontFamily};
       letter-spacing: ${letterSpacing};
       padding: 0.35rem 0;
       opacity: 0;
@@ -89,10 +96,13 @@ async function Lyric({
     }
   `;
 
+  // Font className applied directly on the element — ships with this component
+  const fontClass = fontMap[kind || "verse"];
+
   return (
     <div>
       <style dangerouslySetInnerHTML={{ __html: css }} />
-      <div className={`lyric-${id}`}>{children}</div>
+      <div className={`lyric-${id} ${fontClass} ${emoji.className}`}>{children}</div>
     </div>
   );
 }
@@ -138,7 +148,7 @@ const lyrics: [number, string, ("verse" | "chorus" | "break" | "crab")?][] = [
   [2800, "\u{1F31F} Only shooting stars break the mold \u{1F31F}", "chorus"],
   [3000, "", "break"],
   [1000, "\u{1F980} [Streamed via React Server Components]", "crab"],
-  [1500, "\u{1F980} [Each line: own styles, own keyframes, own universe]", "crab"],
+  [1500, "\u{1F980} [Each line: own font, own styles, own universe]", "crab"],
   [1500, "\u{1F980} [34 async components, 34 Suspense boundaries]", "crab"],
   [1500, "\u{1F980} [Fonts: Inter \u00B7 Playfair Display \u00B7 Fira Code \u00B7 Noto Color Emoji]", "crab"],
   [1500, "\u{1F980} [Next.js 16 on k3s. This is fine.]", "crab"],
@@ -160,7 +170,6 @@ export default function Page() {
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
           background: #0a0a0a;
-          font-family: var(--font-emoji), var(--font-body), system-ui, sans-serif;
           min-height: 100vh;
           display: flex;
           flex-direction: column;
@@ -172,11 +181,10 @@ export default function Page() {
           color: #444;
           margin-bottom: 2rem;
           letter-spacing: 0.15em;
-          font-family: var(--font-crab), monospace;
         }
         .lyrics { max-width: 700px; width: 100%; }
       `}} />
-      <div className="header">ALL STAR KARAOKE {"\u2014"} REACT SERVER COMPONENTS {"\u{1F980}"}</div>
+      <div className={`header ${fira.className}`}>{"ALL STAR KARAOKE \u2014 REACT SERVER COMPONENTS \u{1F980}"}</div>
       <div className="lyrics">
         <ScrollWatcher />
         {timed.map(([ms, text, kind], i) => (
