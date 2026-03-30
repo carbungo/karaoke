@@ -313,8 +313,12 @@ function StageEffects() {
     // Auto-scroll
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
   });
-  var lyr = document.querySelector('.lyrics');
-  if (lyr) obs.observe(lyr, { childList: true, subtree: true });
+  function attachObserver() {
+    var lyr = document.querySelector('.lyrics');
+    if (lyr) { obs.observe(lyr, { childList: true, subtree: true }); return; }
+    setTimeout(attachObserver, 50);
+  }
+  attachObserver();
 
   // ── Spotlight ──
   var spotlight = document.createElement('div');
