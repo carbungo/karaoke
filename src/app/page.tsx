@@ -622,7 +622,7 @@ export default function Page() {
     <>
       <style dangerouslySetInnerHTML={{ __html: `
         *{margin:0;padding:0;box-sizing:border-box}
-        html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+        html{overflow-x:hidden;scroll-behavior:smooth;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
         body{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:4rem 2rem 8rem;overflow-x:hidden;background:hsl(225,50%,3%);transform-origin:50% 50%}
         .lyrics{max-width:800px;width:100%;position:relative;z-index:2}
         .lyric-break{height:2rem}
