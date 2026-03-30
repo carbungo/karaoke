@@ -65,14 +65,14 @@ async function Lyric({
 
   // Animation variety
   const entrances = [
-    `from { opacity: 0; transform: translateY(20px) scale(0.96); filter: blur(8px); }
-     to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }`,
-    `from { opacity: 0; transform: translateX(-30px) scale(0.98); filter: blur(6px); }
-     to { opacity: 1; transform: translateX(0) scale(1); filter: blur(0); }`,
-    `from { opacity: 0; transform: translateY(15px) rotateX(10deg); filter: blur(4px); }
-     to { opacity: 1; transform: translateY(0) rotateX(0); filter: blur(0); }`,
-    `from { opacity: 0; transform: scale(0.9); filter: blur(10px); }
-     to { opacity: 1; transform: scale(1); filter: blur(0); }`,
+    `from { opacity: 0; transform: translateY(18px) scale(0.97); }
+     to { opacity: 1; transform: translateY(0) scale(1); }`,
+    `from { opacity: 0; transform: translateX(-20px); }
+     to { opacity: 1; transform: translateX(0); }`,
+    `from { opacity: 0; transform: translateY(12px); }
+     to { opacity: 1; transform: translateY(0); }`,
+    `from { opacity: 0; transform: scale(0.94); }
+     to { opacity: 1; transform: scale(1); }`,
   ];
   const entrance = entrances[id % entrances.length];
   const duration = 0.6 + (id % 3) * 0.15;
@@ -94,10 +94,6 @@ async function Lyric({
     const glowSize = kind === "outro" ? 40 : 25;
     extraKeyframes = `
       @keyframes shimmer-${id} { to { background-position: 200% center; } }
-      @keyframes glow-${id} {
-        0%, 100% { text-shadow: 0 0 ${glowSize}px hsla(${h}, ${s}%, ${l}%, 0.4), 0 0 ${glowSize * 2}px hsla(${h}, ${s}%, ${l}%, 0.15); }
-        50% { text-shadow: 0 0 ${glowSize + 15}px hsla(${h}, ${s}%, ${l}%, 0.6), 0 0 ${glowSize * 2 + 20}px hsla(${h}, ${s}%, ${l}%, 0.25); }
-      }
     `;
     styles = `
       font-size: ${fontSize}rem;
@@ -114,20 +110,11 @@ async function Lyric({
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      text-shadow: none;
-      filter: drop-shadow(0 0 ${glowSize}px hsla(${h}, ${s}%, ${l}%, 0.3));
       animation:
         fadeIn-${id} ${duration}s ${easing} forwards,
-        shimmer-${id} ${shimmerSpeed}s linear infinite,
-        glow-${id} 3s ease-in-out infinite;
+        shimmer-${id} ${shimmerSpeed}s linear infinite;
     `;
   } else if (kind === "bridge") {
-    extraKeyframes = `
-      @keyframes drift-${id} {
-        0%, 100% { transform: translateX(0); }
-        50% { transform: translateX(3px); }
-      }
-    `;
     styles = `
       font-size: 2.1rem;
       font-weight: 600;
@@ -136,10 +123,8 @@ async function Lyric({
       line-height: 1.4;
       padding: 0.5rem 0;
       color: hsl(${h}, ${s}%, ${l}%);
-      text-shadow: 0 0 20px hsla(${h}, ${s}%, ${l}%, 0.3), 0 0 50px hsla(${h}, ${s}%, ${l}%, 0.1);
-      animation:
-        fadeIn-${id} ${duration}s ${easing} forwards,
-        drift-${id} 6s ease-in-out infinite;
+      text-shadow: 0 0 15px hsla(${h}, ${s}%, ${l}%, 0.2);
+      animation: fadeIn-${id} ${duration}s ${easing} forwards;
     `;
   } else if (kind === "crab") {
     styles = `
@@ -159,7 +144,7 @@ async function Lyric({
       line-height: 1.4;
       padding: 0.4rem 0;
       color: hsl(${h}, ${s}%, ${l}%);
-      text-shadow: 0 0 30px hsla(${h}, ${s}%, ${l}%, 0.15);
+      text-shadow: 0 0 12px hsla(${h}, ${s}%, ${l}%, 0.12);
       animation: fadeIn-${id} ${duration}s ${easing} forwards;
     `;
   }
@@ -187,21 +172,7 @@ function Background() {
   // Animated particle field — stars and bioluminescent motes
   return (
     <style dangerouslySetInnerHTML={{ __html: `
-      @keyframes bgShift {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-      }
-      @keyframes float {
-        0%, 100% { transform: translateY(0) translateX(0); opacity: 0.3; }
-        25% { transform: translateY(-20px) translateX(5px); opacity: 0.8; }
-        50% { transform: translateY(-40px) translateX(-3px); opacity: 0.5; }
-        75% { transform: translateY(-15px) translateX(8px); opacity: 0.9; }
-      }
-      @keyframes twinkle {
-        0%, 100% { opacity: 0.1; }
-        50% { opacity: 0.6; }
-      }
+
       .bg-layer {
         position: fixed;
         inset: 0;
@@ -210,25 +181,6 @@ function Background() {
                     radial-gradient(ellipse at 80% 20%, hsla(260, 40%, 6%, 1) 0%, transparent 60%),
                     radial-gradient(ellipse at 50% 100%, hsla(200, 50%, 4%, 1) 0%, transparent 50%),
                     hsl(225, 50%, 3%);
-        background-size: 200% 200%;
-        animation: bgShift 30s ease-in-out infinite;
-      }
-      .bg-layer::before {
-        content: "";
-        position: fixed;
-        inset: 0;
-        background:
-          radial-gradient(1px 1px at 10% 20%, hsla(0, 0%, 100%, 0.4), transparent),
-          radial-gradient(1px 1px at 30% 60%, hsla(0, 0%, 100%, 0.3), transparent),
-          radial-gradient(1.5px 1.5px at 50% 10%, hsla(200, 80%, 70%, 0.4), transparent),
-          radial-gradient(1px 1px at 70% 40%, hsla(0, 0%, 100%, 0.35), transparent),
-          radial-gradient(1px 1px at 90% 80%, hsla(0, 0%, 100%, 0.3), transparent),
-          radial-gradient(1.5px 1.5px at 20% 90%, hsla(260, 70%, 70%, 0.3), transparent),
-          radial-gradient(1px 1px at 60% 70%, hsla(0, 0%, 100%, 0.25), transparent),
-          radial-gradient(1px 1px at 40% 30%, hsla(180, 60%, 60%, 0.3), transparent),
-          radial-gradient(1px 1px at 85% 15%, hsla(0, 0%, 100%, 0.4), transparent),
-          radial-gradient(1.5px 1.5px at 15% 55%, hsla(40, 90%, 60%, 0.3), transparent);
-        animation: twinkle 4s ease-in-out infinite alternate;
       }
       .vignette {
         position: fixed;
