@@ -1,0 +1,192 @@
+import { Suspense } from "react";
+
+export const dynamic = "force-dynamic";
+
+async function Lyric({
+  ms,
+  children,
+  id,
+  kind,
+}: {
+  ms: number;
+  children?: React.ReactNode;
+  id: number;
+  kind?: "verse" | "chorus" | "break" | "crab";
+}) {
+  if (ms > 0) await new Promise((r) => setTimeout(r, ms));
+
+  if (kind === "break") {
+    return (
+      <div>
+        <style dangerouslySetInnerHTML={{ __html: `.lyric-${id} { height: 1.8rem; }` }} />
+        <div className={`lyric-${id}`} />
+      </div>
+    );
+  }
+
+  const hue = (id * 37 + 15) % 360;
+  const saturation = kind === "chorus" ? 90 : 60;
+  const lightness = kind === "chorus" ? 65 : 75;
+  const fontSize = kind === "chorus" ? 2.4 : kind === "crab" ? 1.0 : 1.8;
+  const fontWeight = kind === "chorus" ? 800 : kind === "crab" ? 400 : 600;
+  const fontStyle = kind === "crab" ? "italic" : "normal";
+  const translateY = 15 + (id % 3) * 5;
+  const duration = 0.3 + (id % 4) * 0.1;
+  const easings = ["ease", "ease-out", "ease-in-out", "cubic-bezier(0.34, 1.56, 0.64, 1)"];
+  const easing = easings[id % 4];
+  const letterSpacing = kind === "chorus" ? "0.05em" : kind === "crab" ? "0.02em" : "normal";
+
+  // Each kind uses its own next/font CSS variable
+  const fontFamily = kind === "chorus"
+    ? "var(--font-chorus), Georgia, serif"
+    : kind === "crab"
+    ? "var(--font-crab), monospace"
+    : "var(--font-body), system-ui, sans-serif";
+
+  const shimmerSpeed = 1.5 + (id % 3) * 0.5;
+  const gradientAngle = 90 + id * 15;
+
+  let colorAndAnimation = "";
+  if (kind === "chorus") {
+    colorAndAnimation = `
+      background: linear-gradient(${gradientAngle}deg,
+        hsl(${hue}, 95%, 55%),
+        hsl(${(hue + 60) % 360}, 95%, 65%),
+        hsl(${(hue + 120) % 360}, 95%, 55%));
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: fadeIn-${id} ${duration}s ${easing} forwards, shimmer-${id} ${shimmerSpeed}s linear infinite;
+    `;
+  } else if (kind === "crab") {
+    colorAndAnimation = `
+      color: hsl(${20 + id * 5}, 90%, 55%);
+      animation: fadeIn-${id} ${duration}s ${easing} forwards;
+    `;
+  } else {
+    colorAndAnimation = `
+      color: hsl(${hue}, ${saturation}%, ${lightness}%);
+      animation: fadeIn-${id} ${duration}s ${easing} forwards;
+    `;
+  }
+
+  const css = `
+    @keyframes fadeIn-${id} {
+      from { opacity: 0; transform: translateY(${translateY}px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    ${kind === "chorus" ? `@keyframes shimmer-${id} { to { background-position: 200% center; } }` : ""}
+    .lyric-${id} {
+      font-size: ${fontSize}rem;
+      font-weight: ${fontWeight};
+      font-style: ${fontStyle};
+      font-family: ${fontFamily};
+      letter-spacing: ${letterSpacing};
+      padding: 0.35rem 0;
+      opacity: 0;
+      ${colorAndAnimation}
+    }
+  `;
+
+  return (
+    <div>
+      <style dangerouslySetInnerHTML={{ __html: css }} />
+      <div className={`lyric-${id}`}>{children}</div>
+    </div>
+  );
+}
+
+function ScrollWatcher() {
+  return (
+    <script dangerouslySetInnerHTML={{ __html: `
+      new MutationObserver(function() {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+      }).observe(document.querySelector(".lyrics"), { childList: true, subtree: true });
+    `}} />
+  );
+}
+
+const lyrics: [number, string, ("verse" | "chorus" | "break" | "crab")?][] = [
+  [0,    "\u{1F3A4} NOW LOADING: ALL STAR KARAOKE \u{1F3A4}", "verse"],
+  [2000, "", "break"],
+  [500,  "\u{1F3B5} Somebody once told me", "verse"],
+  [2200, "the world is gonna roll me \u{1F30D}", "verse"],
+  [2000, "I ain\u0027t the sharpest tool in the shed \u{1F527}", "verse"],
+  [3000, "She was looking kind of dumb", "verse"],
+  [1800, "with her finger and her thumb \u{1F446}", "verse"],
+  [2000, "In the shape of an \"L\" on her forehead \u{1F926}", "verse"],
+  [3500, "", "break"],
+  [500,  "Well, the years start coming", "verse"],
+  [1600, "and they don\u0027t stop coming \u{1F3C3}", "verse"],
+  [1800, "Fed to the rules", "verse"],
+  [1200, "and I hit the ground running \u{1F3C3}\u200D\u2642\uFE0F", "verse"],
+  [2200, "Didn\u0027t make sense not to live for fun \u{1F389}", "verse"],
+  [2800, "Your brain gets smart", "verse"],
+  [1200, "but your head gets dumb \u{1F9E0}", "verse"],
+  [2500, "", "break"],
+  [500,  "So much to do, so much to see \u{1F440}", "verse"],
+  [2200, "So what\u0027s wrong with taking the backstreets? \u{1F6E4}\uFE0F", "verse"],
+  [2800, "You\u0027ll never know if you don\u0027t go \u{1F680}", "verse"],
+  [2500, "You\u0027ll never shine if you don\u0027t glow \u2728", "verse"],
+  [3000, "", "break"],
+  [800,  "\u{1F525} HEY NOW, YOU\u0027RE AN ALL STAR \u{1F525}", "chorus"],
+  [2000, "\u{1F3AE} GET YOUR GAME ON, GO PLAY \u{1F3AE}", "chorus"],
+  [2200, "\u2B50 HEY NOW, YOU\u0027RE A ROCK STAR \u2B50", "chorus"],
+  [2000, "\u{1F3B8} GET THE SHOW ON, GET PAID \u{1F3B8}", "chorus"],
+  [2500, "\u{1F4B0} And all that glitters is gold \u{1F4B0}", "chorus"],
+  [2800, "\u{1F31F} Only shooting stars break the mold \u{1F31F}", "chorus"],
+  [3000, "", "break"],
+  [1000, "\u{1F980} [Streamed via React Server Components]", "crab"],
+  [1500, "\u{1F980} [Each line: own styles, own keyframes, own universe]", "crab"],
+  [1500, "\u{1F980} [34 async components, 34 Suspense boundaries]", "crab"],
+  [1500, "\u{1F980} [Fonts: Inter \u00B7 Playfair Display \u00B7 Fira Code \u00B7 Noto Color Emoji]", "crab"],
+  [1500, "\u{1F980} [Next.js 16 on k3s. This is fine.]", "crab"],
+];
+
+function getCumulativeDelays() {
+  let cum = 0;
+  return lyrics.map(([delay, text, kind]) => {
+    cum += delay;
+    return [cum, text, kind ?? "verse"] as [number, string, "verse" | "chorus" | "break" | "crab"];
+  });
+}
+
+export default function Page() {
+  const timed = getCumulativeDelays();
+  return (
+    <>
+      <style dangerouslySetInnerHTML={{ __html: `
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+          background: #0a0a0a;
+          font-family: var(--font-emoji), var(--font-body), system-ui, sans-serif;
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 2rem;
+        }
+        .header {
+          font-size: 1.1rem;
+          color: #444;
+          margin-bottom: 2rem;
+          letter-spacing: 0.15em;
+          font-family: var(--font-crab), monospace;
+        }
+        .lyrics { max-width: 700px; width: 100%; }
+      `}} />
+      <div className="header">ALL STAR KARAOKE {"\u2014"} REACT SERVER COMPONENTS {"\u{1F980}"}</div>
+      <div className="lyrics">
+        <ScrollWatcher />
+        {timed.map(([ms, text, kind], i) => (
+          <Suspense key={i} fallback={null}>
+            <Lyric ms={ms} id={i} kind={kind}>
+              {kind !== "break" ? text : null}
+            </Lyric>
+          </Suspense>
+        ))}
+      </div>
+    </>
+  );
+}
