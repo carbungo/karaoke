@@ -622,13 +622,15 @@ export default function Page() {
     <>
       <style dangerouslySetInnerHTML={{ __html: `
         *{margin:0;padding:0;box-sizing:border-box}
-        html{overflow-x:hidden;scroll-behavior:smooth;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+        html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
         body{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:4rem 2rem 8rem;overflow-x:hidden;background:hsl(225,50%,3%);transform-origin:50% 50%}
         .lyrics{max-width:800px;width:100%;position:relative;z-index:2}
         .lyric-break{height:2rem}
         .chorus-line{position:relative}
         .chorus-line::before{content:"";position:absolute;left:-2rem;top:50%;transform:translateY(-50%);width:3px;height:70%;background:linear-gradient(to bottom,transparent,hsla(38,90%,60%,0.3),transparent);border-radius:2px}
-        @media(max-width:600px){body{padding:2rem 1.2rem 5rem}.lyrics{max-width:100%}.chorus-line::before{left:-0.8rem;width:2px}}
+        .lyrics *{overflow-wrap:break-word;word-break:break-word}
+        @media(max-width:768px){[class^="lyric-"]{transform:rotate(0deg)!important}}
+        @media(max-width:600px){body{padding:2rem 1rem 5rem}.lyrics{max-width:100%;padding:0 0.25rem}.chorus-line::before{left:-0.6rem;width:2px}}
       `}} />
       <StageEffects />
       <div className="lyrics">
